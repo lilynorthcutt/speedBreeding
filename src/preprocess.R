@@ -1,54 +1,114 @@
-packages <- c("tidyr", "readxl", "dplyr", "magrittr", "purrr", "ggplot2") 
+packages <- c("tidyr", "readxl", "dplyr", "magrittr", "purrr", 
+              "ggplot2", "DescTools", "stringr", "snakecase") 
 invisible(lapply(packages, require, character.only = TRUE ))
 source('src/functions.R')
-#filepath <- "Data/SB datasheets-Per Trait - CMPT.xlsx"
-filepath <- "Data/Speed Breeding 2023data.xlsx"
+
+
 
 
 #######################
 #--- Read in Data ---#
 #######################
-sheetnames <-  readxl::excel_sheets(filepath)
-sheetnames
 
-# Plant Height
-sbHeight <- readxl::read_excel(filepath, sheet = "SB Height", skip = 2) %>% rename(entry = 'SB ENTRY')
-cHeight <- readxl::read_excel(filepath, sheet = "C Height", skip = 2) %>% rename(entry = 'SB ENTRY')
+# 2023 Data
+filepath23 <- "Data/Speed Breeding 2023.xlsx"
+sheetname23 <- "Transplant"
+experiment_list <- c("SB", "C")
+plant_traits <- c("PLANT HEIGHT (cm)", "LEAF #", "LEAF COLOR", 
+                  "BUDS", "FLOWERS", "FRUIT")
 
-#
+df_2023 <- generate2023Data(filepath23, sheetname23, experiment_list, plant_traits) %>% 
+  suppressMessages() 
 
-#####################
-## Clean Data ##
-####################
+leaf_width <- read_excel(filepath23, sheet = 'Leaf Width', skip = 2)
 
-# Note: columns being read in as char, instead of date. temporary solution to manually input with list
-# Note: error in sbDates in excel - 10/31/2023 was entered as 10/31/2024 - corrected here
-sbDates<- c("10/31/2023",	"11/1/2023", "11/3/2023","11/6/2023",	"11/8/2023",	"11/13/2023",	
-            "11/15/2023",	"11/17/2023",	"11/20/2023",	"11/22/2023",	"11/24/2023",	"11/27/2023",	
-            "11/29/2023",	"12/1/2023",	"12/7/2023",	"12/14/2023",	"12/21/2023",	"12/28/2023",
-            "1/4/2024",	"1/11/2024",	"1/18/2024")
-cDates <- c("11/13/2023",	"11/15/2023",	"11/17/2023",	"11/20/2023",	"11/22/2023",	"11/24/2023",	"11/27/2023",	
-            "11/29/2023",	"12/1/2023", "12/7/2023",	"12/14/2023",	"12/21/2023",	"12/28/2023",	"1/4/2024",	"1/11/2024",	"1/18/2024")
-names(sbHeight) <- c("entry", sbDates)
-names(cHeight) <- c("entry", cDates)
+basal_branches <- read_excel(filepath23, sheet = 'Basal Branches', skip = 2)
 
-# Pivot longer s.t. date is a col, label (sb/c), and combine
-cHeight %<>% pivot_longer(!entry, , names_to = "date", values_to = "height") %>% 
-  mutate(
-    date = as.Date(date, "%m/%d/%Y"),
-    exp = "c")
-sbHeight %<>% pivot_longer(!entry, , names_to = "date", values_to = "height") %>% 
-  mutate(
-    date = as.Date(date, "%m/%d/%Y"),
-    exp = "sb")
-height <- merge(x = cHeight, y = sbHeight, by = c('entry', 'date', 'height', 'exp'), all = TRUE) 
-#rm(sbHeight, cHeight, cDates, sbDates)
-  
+# Variety Key
+filepath_key <- "Data/Variety Key.xlsx"
+variety_key <- read_excel(filepath_key)
+
+
+#######################
+#---  Clean Data   ---#
+#######################
+
+# Rename cols snakecase
+colnames(df_2023) <- to_snake_case(colnames(df_2023)) 
+df_2023 %<>% rename(leaf_num = leaf,
+                    buds_num = buds,
+                    flowers_num = flowers,
+                    fruit_num = fruit)
+
+colnames(variety_key) <- to_snake_case(colnames(variety_key)) 
+colnames(leaf_width) <- to_snake_case(colnames(leaf_width))
+colnames(basal_branches) <- to_snake_case(colnames(basal_branches))
+
+
 # Separate Entry Names
-height %<>% rowwise() %>% mutate(
-  entryP1 = strsplit(entry, "[-]")[[1]][1],
-  entryP2 = strsplit(entry, "[-]")[[1]][2],
-  entryP3 = strsplit(entry, "[-]")[[1]][3],
+df_2023 %<>% rowwise() %>% 
+  mutate( #Add variety and plant individual identifier
+    variety = strsplit(entry, "[-]")[[1]][1],
+    identifier = paste0(strsplit(entry, "[-]")[[1]][2], '-', strsplit(entry, "[-]")[[1]][3])
+  ) %>% select(variety, identifier, everything(),-entry) 
+
+leaf_width %<>% rowwise() %>% 
+  mutate( #Add variety and plant individual identifier
+    variety = strsplit(entry, "[-]")[[1]][1],
+    identifier = paste0(strsplit(entry, "[-]")[[1]][2], '-', strsplit(entry, "[-]")[[1]][3]),
+    week = 1
+  ) %>% select(variety, identifier, everything(),-entry) 
+
+basal_branches %<>% rowwise() %>% 
+  mutate( #Add variety and plant individual identifier
+    variety = strsplit(entry, "[-]")[[1]][1],
+    identifier = paste0(strsplit(entry, "[-]")[[1]][2], '-', strsplit(entry, "[-]")[[1]][3]),
+    week = 1
+  ) %>% select(variety, identifier, everything(),-entry) 
+
+# Convert date to date class
+df_2023 %<>% mutate(
+  date = as.Date(date, format =  "%Y-%m-%d")
 ) 
 
+leaf_width %<>% mutate(
+  date = as.Date(date, format =  "%Y-%m-%d")
+) 
+
+basal_branches %<>% mutate(
+  date = as.Date(date, format =  "%Y-%m-%d")
+) 
+
+# Make leaf_color a char
+df_2023 %<>% mutate(
+  leaf_color = leaf_color %>% as.character()
+) 
+
+
+
+# Summarize data by varitety for every date and experiment type
+summary_2023 <- df_2023 %>% group_by(variety, date, experiment) %>% 
+  summarise(avg_height = mean(plant_height_cm, na.rm = T),
+            avg_leaf_num = mean(leaf_num, na.rm = T),
+            avg_buds_num = mean(buds_num, na.rm = T),
+            avg_flowers_num = mean(flowers_num, na.rm = T),
+            avg_fruit_num = mean(fruit_num, na.rm = T),
+            #mode_leaf_color = Mode(leaf_color),
+            total_buds_num =sum(buds_num, na.rm = T),
+            total_flower_num = sum(flowers_num, na.rm = T),
+            total_fruit_num = sum(fruit_num, na.rm = T),
+            
+            # avg_buds
+            # avg_flowers
+            # avg_fruit
+            ) 
+
+# Replace NA with 0
+summary_2023[is.na(summary_2023)] <- 0
+
+# Merge name and gbs into dataframe
+summary_2023 %<>% 
+  mutate('23_c' = str_extract(variety, "(?<=\\C)\\d+$")) %>% 
+  merge(variety_key %>% select(name, gbs, '23_c'), by = '23_c') %>%
+  select(-'23_c')
 
