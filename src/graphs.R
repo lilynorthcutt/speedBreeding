@@ -13,7 +13,18 @@ ggplot(summary_2023)+
   xlab("")+ ylab("Avg Height")+ggtitle("Height Over Time for SB vs. Control")
 
 
-# % Speed of Growth (SCATTER)
+# Height Percent Increase (SCATTER)
+height_increase <- summary_2023 %>% group_by(name, experiment) %>% arrange(date, .by_group = TRUE) %>% 
+  mutate(percent_change =  case_when( lag(avg_height) == 0 ~NA,
+                                      avg_height == 0 ~NA,
+                                      T ~(avg_height -lag(avg_height))/lag(avg_height))
+        ) #%>% filter(!is.na(percent_change))
+
+ggplot(height_increase)+
+  geom_point(aes(x = date, y = percent_change*100, color = experiment))+
+  geom_line(aes(x = date, y = percent_change*100, color = experiment))+
+  facet_wrap(.~ name)+
+  xlab("")+ ylab("Avg Height Increase (%)")+ggtitle("Percent Increase in Height Over Time for SB vs. Control")
 
 
 # Leaf Number
