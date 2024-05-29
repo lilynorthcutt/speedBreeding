@@ -29,7 +29,7 @@ filepath_key <- "Data/Variety Key.xlsx"
 variety_key <- read_excel(filepath_key)
 
 variety_key %<>% mutate(
-  label_23 = paste0('23C', label_23) )
+  label23 = paste0('23C', label23) )
 
 
 #######################
@@ -113,7 +113,7 @@ summary_2023[is.na(summary_2023)] <- 0
 
 # Merge name and gbs into dataframe
 summary_2023 %<>% 
-  mutate(label_23 = str_extract(variety, "(?<=\\C)\\d+$")) %>% 
+  mutate(label_23 = variety) %>% #str_extract(variety, "(?<=\\C)\\d+$")) %>% 
   merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
   select(-label_23)
 
