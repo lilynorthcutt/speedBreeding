@@ -1,5 +1,5 @@
 packages <- c("tidyr", "readxl", "dplyr", "magrittr", "purrr", 
-              "ggplot2", "DescTools", "stringr", "snakecase") 
+              "ggplot2", "stringr", "snakecase") 
 invisible(lapply(packages, require, character.only = TRUE ))
 source('src/functions.R')
 
@@ -27,6 +27,9 @@ basal_branches <- read_excel(filepath23, sheet = 'Basal Branches', skip = 2)
 # Variety Key
 filepath_key <- "Data/Variety Key.xlsx"
 variety_key <- read_excel(filepath_key)
+
+variety_key %<>% mutate(
+  label_23 = paste0('23C', label_23) )
 
 
 #######################
@@ -89,14 +92,16 @@ df_2023 %<>% mutate(
 # Summarize data by varitety for every date and experiment type
 summary_2023 <- df_2023 %>% group_by(variety, date, experiment) %>% 
   summarise(avg_height = mean(plant_height_cm, na.rm = T),
+            sd_height = sd(plant_height_cm, na.rm = T),
             avg_leaf_num = mean(leaf_num, na.rm = T),
-            avg_buds_num = mean(buds_num, na.rm = T),
-            avg_flowers_num = mean(flowers_num, na.rm = T),
-            avg_fruit_num = mean(fruit_num, na.rm = T),
+            sd_leaf_num = sd(leaf_num, na.rm = T),
+            #avg_buds_num = mean(buds_num, na.rm = T),
+            #avg_flowers_num = mean(flowers_num, na.rm = T),
+            #avg_fruit_num = mean(fruit_num, na.rm = T),
             #mode_leaf_color = Mode(leaf_color),
-            total_buds_num =sum(buds_num, na.rm = T),
-            total_flower_num = sum(flowers_num, na.rm = T),
-            total_fruit_num = sum(fruit_num, na.rm = T),
+            #total_buds_num =sum(buds_num, na.rm = T),
+            #total_flower_num = sum(flowers_num, na.rm = T),
+            #total_fruit_num = sum(fruit_num, na.rm = T),
             
             # avg_buds
             # avg_flowers
@@ -108,7 +113,7 @@ summary_2023[is.na(summary_2023)] <- 0
 
 # Merge name and gbs into dataframe
 summary_2023 %<>% 
-  mutate('23_c' = str_extract(variety, "(?<=\\C)\\d+$")) %>% 
-  merge(variety_key %>% select(name, gbs, '23_c'), by = '23_c') %>%
-  select(-'23_c')
+  mutate(label_23 = str_extract(variety, "(?<=\\C)\\d+$")) %>% 
+  merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
+  select(-label_23)
 

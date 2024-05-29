@@ -109,3 +109,19 @@ prepTukeysDf <- function(tukey_result){
   return(results)
 }
 
+# Graphing Functoins
+addVarName <- function(df, colname){
+  'Function that adds the variety name by 
+  the pedigree number for a specified column'
+  
+  df[['label_23']] <- df[[colname]]
+
+  df %<>%merge(
+    variety_key %>% select(name, label_23) %>% rename(var_name = name), 
+    by = 'label_23') 
+  
+  df[[paste0(colname, "_name")]] <- df[['var_name']]
+  
+  return(df %>% select(-var_name))
+  
+}
