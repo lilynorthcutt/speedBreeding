@@ -103,12 +103,15 @@ source('src/preprocess.R')
 #   coord_flip()+
 #   facet_wrap(.~ exp1)
 
+
 ################################################################################
-## Rate of Growth
-
-tukey_result_height_raw <- tukeyHsdByTrait(summary_2023, "avg_height")
+################################################################################
+### AVG ###
+################################################################################
+################################################################################
+# Height
+tukey_result_height_raw <- tukeyHsdByTraitAvg(summary_2023, "avg_height")
 tukey_height<- prepTukeysDf(tukey_result_height_raw)
-
 
 tukey_height %<>% addVarName('var1')
 tukey_height %<>% addVarName('var2')
@@ -123,20 +126,16 @@ ggplot(tukey_height %>% filter(var1 == var2))+
   xlab("")+
   ggtitle("Tukeys HSD on Difference Plant Growth Rate")
 
-ggplot(tukey_height %>% filter(exp1 == exp2))+
-  geom_point(aes(x = name, y = diff))+
-  geom_errorbar(aes(name,ymin = lwr, ymax = upr), width = 0.2)+
-  geom_hline(yintercept=0, linetype="dashed", color = "red")+
-  coord_flip()+
-  facet_wrap(.~ exp1)
 
-### Raw Height
+# Leaf Num
 
+# Bud Num
 
+# Flower Num
 
-################################################################################
-## Basal Branches
+# Fruit Num
 
+# Basal Branch Num
 aov_basal <- aov(basal_branches ~  variety * experiment,#+ Error(variety/week), 
                  data = basal_branches)
 tukey_basal_raw <- TukeyHSD(aov_basal)
@@ -154,9 +153,8 @@ ggplot(tukey_basal %>% filter(var1 == var2))+
   xlab("")+
   ggtitle("Tukeys HSD on Difference Basal Branch Number")
 
-################################################################################
-## Leaf Width
 
+# Leaf Width Num
 aov_width <- aov(leaf_width_cm ~  variety * experiment,#+ Error(variety/week), 
                  data = leaf_width)
 tukey_width_raw <- TukeyHSD(aov_width)
@@ -174,10 +172,33 @@ ggplot(tukey_width %>% filter(var1 == var2))+
   xlab("")+
   ggtitle("Tukeys HSD on Difference in Leaf Width")
 
-################################################################################
-## Leaf Number
 
-tukey_result_leafnum_raw <- tukeyHsdByTrait(summary_2023, "avg_leaf_num")
+################################################################################
+################################################################################
+### RATE OF CHANGE ###
+################################################################################
+################################################################################
+
+## Height
+tukey_result_height_raw <- tukeyHsdByTraitROC(summary_2023, "avg_height")
+tukey_height<- prepTukeysDf(tukey_result_height_raw)
+
+tukey_height %<>% addVarName('var1')
+tukey_height %<>% addVarName('var2')
+
+
+ggplot(tukey_height %>% filter(var1 == var2))+
+  geom_point(aes(x = var1_name, y = diff))+
+  geom_errorbar(aes(var1_name,ymin = lwr, ymax = upr), width = 0.2)+
+  geom_hline(yintercept=0, linetype="dashed", color = "red")+
+  coord_flip()+
+  ylab('Difference in SB and C')+
+  xlab("")+
+  ggtitle("Tukeys HSD on Difference Plant Growth Rate")
+
+
+## Leaf Number
+tukey_result_leafnum_raw <- tukeyHsdByTraitROC(summary_2023, "avg_leaf_num")
 tukey_leafnum<- prepTukeysDf(tukey_result_leafnum_raw)
 
 tukey_leafnum %<>% addVarName('var1')
@@ -192,3 +213,67 @@ ggplot(tukey_leafnum %>% filter(var1 == var2))+
   xlab("")+
   ggtitle("Tukeys HSD on Difference in Leaf Number")
 
+# Bud Num
+tukey_result_bud_raw <- tukeyHsdByTraitROC(summary_2023, "avg_buds_num")
+tukey_bud<- prepTukeysDf(tukey_result_bud_raw)
+
+tukey_bud %<>% addVarName('var1')
+tukey_bud %<>% addVarName('var2')
+
+
+ggplot(tukey_bud %>% filter(var1 == var2))+
+  geom_point(aes(x = var1_name, y = diff))+
+  geom_errorbar(aes(var1_name,ymin = lwr, ymax = upr), width = 0.2)+
+  geom_hline(yintercept=0, linetype="dashed", color = "red")+
+  coord_flip()+
+  ylab('Difference in SB and C')+
+  xlab("")+
+  ggtitle("Tukeys HSD on Difference in Bud Number")
+
+
+# Flower Num
+tukey_result_flower_raw <- tukeyHsdByTraitROC(summary_2023, "avg_flowers_num")
+tukey_flower<- prepTukeysDf(tukey_result_flower_raw)
+
+tukey_flower %<>% addVarName('var1')
+tukey_flower %<>% addVarName('var2')
+
+
+ggplot(tukey_flower %>% filter(var1 == var2))+
+  geom_point(aes(x = var1_name, y = diff))+
+  geom_errorbar(aes(var1_name,ymin = lwr, ymax = upr), width = 0.2)+
+  geom_hline(yintercept=0, linetype="dashed", color = "red")+
+  coord_flip()+
+  ylab('Difference in SB and C')+
+  xlab("")+
+  ggtitle("Tukeys HSD on Difference in Flower Number")
+
+
+# Fruit Num
+tukey_result_fruit_raw <- tukeyHsdByTraitROC(summary_2023, "avg_fruit_num")
+tukey_fruit<- prepTukeysDf(tukey_result_flower_raw)
+
+tukey_fruit %<>% addVarName('var1')
+tukey_fruit %<>% addVarName('var2')
+
+
+ggplot(tukey_fruit %>% filter(var1 == var2))+
+  geom_point(aes(x = var1_name, y = diff))+
+  geom_errorbar(aes(var1_name,ymin = lwr, ymax = upr), width = 0.2)+
+  geom_hline(yintercept=0, linetype="dashed", color = "red")+
+  coord_flip()+
+  ylab('Difference in SB and C')+
+  xlab("")+
+  ggtitle("Tukeys HSD on Difference in Fruit Number")
+
+
+
+
+
+
+
+
+
+
+
+#

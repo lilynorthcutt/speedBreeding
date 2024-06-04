@@ -35,6 +35,33 @@ ggplot(summary_2023)+
   facet_wrap(.~ name)+
   xlab("")+ ylab("Avg Leaf Num")+ggtitle("Leaf Num Over Time for SB vs. Control")
 
+# Bud Number
+ggplot(summary_2023)+
+  geom_point(aes(x = date, y = avg_buds_num, color = experiment))+
+  geom_line(aes(x = date, y = avg_buds_num, color = experiment))+
+  geom_errorbar(aes(date, ymin = avg_buds_num - sd_buds_num, ymax = avg_buds_num + sd_buds_num, color = experiment)) +
+  facet_wrap(.~ name)+
+  xlab("")+ ylab("Avg Bud Num")+ggtitle("Bud Num Over Time for SB vs. Control")
+
+
+# Flower Number
+ggplot(summary_2023)+
+  geom_point(aes(x = date, y = avg_flowers_num, color = experiment))+
+  geom_line(aes(x = date, y = avg_flowers_num, color = experiment))+
+  geom_errorbar(aes(date, ymin = avg_flowers_num - sd_flowers_num, ymax = avg_flowers_num + sd_flowers_num, color = experiment)) +
+  facet_wrap(.~ name)+
+  xlab("")+ ylab("Avg Flower Num")+ggtitle("Flower Num Over Time for SB vs. Control")
+
+
+# Fruit Number
+ggplot(summary_2023)+
+  geom_point(aes(x = date, y = avg_fruit_num, color = experiment))+
+  geom_line(aes(x = date, y = avg_fruit_num, color = experiment))+
+  geom_errorbar(aes(date, ymin = avg_fruit_num - sd_fruit_num, ymax = avg_fruit_num + sd_fruit_num, color = experiment)) +
+  facet_wrap(.~ name)+
+  xlab("")+ ylab("Avg Fruit Num")+ggtitle("Fruit Num Over Time for SB vs. Control")
+
+
 
 # Leaf width (BAR)
 leaf_width_summary <- leaf_width %>% group_by(variety, experiment, date) %>% 

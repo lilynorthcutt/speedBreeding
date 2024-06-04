@@ -42,9 +42,10 @@ dataByTrait <- function(df, plant_trait, dates, plant_traits){
 
 
 #Functions to run and view tukeys hsd
-tukeyHsdByTrait <- function(df, colname){
-  'Function to take in our dataframe, modify the data for hypothesis testing
-  and run Tukeys HSD on the selected data - returning the test'
+tukeyHsdByTraitROC <- function(df, colname){
+  'Function to take in our dataframe, modify the data for hypothesis testing on the 
+  cahnge (increase or decrease) in the value and run Tukeys HSD on the selected data 
+  - returning the test'
   
   trait <- df %>% select(variety, experiment, date, colname) %>% 
     # SB collected jan 25 and C collected jan 26 => 
@@ -58,7 +59,7 @@ tukeyHsdByTrait <- function(df, colname){
     # replace NA's with 0
     replace(is.na(.), 0) %>% ungroup() %>% 
     #Add week number and change in trait  
-    group_by(variety) %>% arrange(date) %>% 
+    arrange(date) %>% 
     mutate(
       week = row_number(),
       change_exp = SB - lag(SB),
@@ -88,6 +89,38 @@ tukeyHsdByTrait <- function(df, colname){
   
   
   return(tukey_result)
+}
+
+tukeyHsdByTraitAvg <- function(df, colname){
+  'Function to take in our dataframe, modify the data for hypothesis testing on 
+  the value and run Tukeys HSD on the selected data 
+  - returning the test'
+  
+  trait <- df %>% select(variety, experiment, date, colname) %>% 
+    # SB collected jan 25 and C collected jan 26 => 
+    # assign C as jan 26 s.t. both datas can be considered same day
+    mutate(date=case_when(date == '2024-01-26' ~as.Date('2024-01-25', format = "%Y-%m-%d"),
+                          T ~date)) %>% 
+    # there is no data taken on dec 19th
+    filter(!(date == '2023-12-19')) %>% 
+    # Only NA's left are where control is too small to be transplanted yet
+    # replace NA's with 0
+    replace(is.na(.), 0) %>% ungroup() %>% 
+    #Add week number and change in trait  
+    arrange(date) %>% 
+    mutate(
+      week = row_number()
+    ) %>% rename(change_in_trait = colname)
+  
+  ##### TUKEYS HSD
+  trait$variety <- as.factor(trait$variety)
+  aov <- aov(change_in_trait ~  variety * week * experiment,#+ Error(variety/week), 
+             data = trait)
+  tukey_result <- TukeyHSD(aov, which = 'experiment')
+  
+  
+  return(tukey_result)
+  
 }
 
 prepTukeysDf <- function(tukey_result){
