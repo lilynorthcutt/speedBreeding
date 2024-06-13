@@ -1,6 +1,8 @@
-### Function ###
+###### ###### ###### ###### ###### ######
+###### Function ######
+###### ###### ###### ###### ###### ######
 
-#Functions to read in 2023 data
+#### Functions to read in 2023 data
 generate2023Data <- function(filepath, sheetname, experiment_list, plant_traits){
   'Function to cleanly combine both speed breeding and control data into one dataframe'
   
@@ -39,9 +41,22 @@ dataByTrait <- function(df, plant_trait, dates, plant_traits){
   return(df_plant_trait)
 }
 
+### Data Checks to Ensure data is formatted correctly
+
+# Check that each date has a control row and sb row
+checkSameForEachDate <- function (df){
+  test <- df %>% group_by(date, variety) %>% summarise(n = n()) %>% 
+    filter(! n==2) %>% nrow() == 0
+  
+  if (!test) {
+    stop(paste("Some dates do not have 1 entry fo SB and 1 entry for C"))
+  }else{
+    paste("Passed Check 1")}
+}
 
 
-#Functions to run and view tukeys hsd
+
+### Functions to run and view tukeys hsd
 tukeyHsdByTraitROC <- function(df, colname){
   'Function to take in our dataframe, modify the data for hypothesis testing on the 
   cahnge (increase or decrease) in the value and run Tukeys HSD on the selected data 
@@ -105,18 +120,21 @@ tukeyHsdByTraitAvg <- function(df, colname){
     filter(!(date == '2023-12-19')) %>% 
     # Only NA's left are where control is too small to be transplanted yet
     # replace NA's with 0
-    replace(is.na(.), 0) %>% ungroup() %>% 
-    #Add week number and change in trait  
-    arrange(date) %>% 
-    mutate(
-      week = row_number()
-    ) %>% rename(change_in_trait = colname)
+    replace(is.na(.), 0) %>% ungroup() %>% rename(trait = colname)
+
+  # Add week number:
+  week <- trait %>% ungroup() %>% select(date) %>% unique() %>% 
+    arrange(date) %>% mutate(week = row_number())
+  
+  trait %<>% merge(week, by = 'date') 
   
   ##### TUKEYS HSD
   trait$variety <- as.factor(trait$variety)
-  aov <- aov(change_in_trait ~  variety * week * experiment,#+ Error(variety/week), 
+
+  aov <- aov(trait ~  variety * week * experiment,#+ Error(variety/week), 
              data = trait)
-  tukey_result <- TukeyHSD(aov, which = 'experiment')
+  summary(aov)
+  tukey_result <- TukeyHSD(aov)
   
   
   return(tukey_result)
@@ -142,7 +160,7 @@ prepTukeysDf <- function(tukey_result){
   return(results)
 }
 
-# Graphing Functoins
+### Graphing Functions
 addVarName <- function(df, colname){
   'Function that adds the variety name by 
   the pedigree number for a specified column'

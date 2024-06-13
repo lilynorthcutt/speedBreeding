@@ -114,9 +114,45 @@ summary_2023 <- df_2023 %>% group_by(variety, date, experiment) %>%
 # Replace NA with 0
 summary_2023[is.na(summary_2023)] <- 0
 
+# NOTE: no data was taken on 12/19/2023 except leaf # and leaf color for  C
+# Making the rest of values NA except leaf # and color on this date in case we ever want to use this data
+# However for now, we will filter it out because SB was not collected on this day
+keep_columns <- c('variety', 'experiment', 'date', 'avg_leaf_num', 'sd_leaf_num')
+
+rows_to_update <- summary_2023$date == '2023-12-19'
+columns_to_update <- setdiff(names(summary_2023), keep_columns)
+summary_2023[rows_to_update, columns_to_update] <- NA
+
+summary_2023 %<>% filter(!(date == '2023-12-19')) # comment me out to use this data
+
+# NOTE: SB data taken on 1/25 and C taken on 1/26. Want to overwrite this s.t. these entries will be compared with each other
+summary_2023 %<>% mutate(date=case_when(date == '2024-01-26' ~as.Date('2024-01-25', format = "%Y-%m-%d"),
+                                        T ~date)) 
+
+
 # Merge name and gbs into dataframe
 summary_2023 %<>% 
   mutate(label_23 = variety) %>% #str_extract(variety, "(?<=\\C)\\d+$")) %>% 
   merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
   select(-label_23)
 
+
+######################################################################
+### RUN CHECKS TO MAKE SURE DATA IS HOW WE EXPECT
+
+# Only the expected variety names
+varList <- c('23C340', '23C341', '23C342', '23C343')
+summary_2023 %>% filter(variety%in%varList) %>% nrow() == nrow(summary_2023)
+
+# For each date, there is 1 entry for each variety (4) for C and SB
+summary_2023 %>% select(date) %>% unique() %>% 
+  mutate(numberC = map(date, function(x) summary_2023 %>% filter(date == x, experiment == "C") %>% nrow()),
+    repeatVarC = map(date, function(x) summary_2023 %>% 
+                       filter(date == x, experiment == "C") %>% select(variety) %>% nrow() ),
+    numberSB = map(date, function(x) summary_2023 %>% filter(date == x, experiment == "SB") %>% nrow()),
+    repeatVarSB = map(date, function(x) summary_2023 %>% 
+                       filter(date == x, experiment == "SB") %>% select(variety) %>% nrow())
+  ) %>% select(-date) %>% apply(. , 2, function(col) all(col == 4)) %>% all()
+
+
+checkSameForEachDate(summary_2023)
