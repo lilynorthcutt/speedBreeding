@@ -130,12 +130,30 @@ summary_2023 %<>% mutate(date=case_when(date == '2024-01-26' ~as.Date('2024-01-2
                                         T ~date)) 
 
 
+
 # Merge name and gbs into dataframe
 summary_2023 %<>% 
   mutate(label_23 = variety) %>% #str_extract(variety, "(?<=\\C)\\d+$")) %>% 
   merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
   select(-label_23)
 
+
+# Basal Branches: Summmarize data and add names + gbs
+basal_summary <- basal_branches %>% group_by(variety, experiment, date) %>% 
+  summarise(avg_basal = mean(basal_branches, na.rm = T),
+            sd_basal = sd(basal_branches, na.rm = T)) %>% 
+  mutate(label_23 = variety) %>%   
+  merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
+  select(-label_23)
+
+
+# Leaf Width: Summarize data and add names + gbs
+leaf_width_summary <- leaf_width %>% group_by(variety, experiment, date) %>% 
+  summarise(avg_width = mean(leaf_width_cm, na.rm = T),
+            sd_width = sd(leaf_width_cm, na.rm = T)) %>% 
+  mutate(label_23 = variety) %>%   
+  merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
+  select(-label_23)
 
 ######################################################################
 ### RUN CHECKS TO MAKE SURE DATA IS HOW WE EXPECT
