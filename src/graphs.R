@@ -5,7 +5,7 @@ source('src/preprocess.R')
 ################################
 
 # Height (SCATTER)
-ggplot(summary_2023)+
+ggplot(summary_2023 %>% filter(!is.na(avg_height)))+
   geom_point(aes(x = date, y = avg_height, color = experiment))+
   geom_line(aes(x = date, y = avg_height, color = experiment))+
   geom_errorbar(aes(date, ymin = avg_height - sd_height, ymax = avg_height + sd_height, color = experiment)) +
@@ -28,7 +28,7 @@ ggplot(height_increase)+
 
 
 # Leaf Number
-ggplot(summary_2023)+
+ggplot(summary_2023 %>% filter(!is.na(avg_leaf_num)))+
   geom_point(aes(x = date, y = avg_leaf_num, color = experiment))+
   geom_line(aes(x = date, y = avg_leaf_num, color = experiment))+
   geom_errorbar(aes(date, ymin = avg_leaf_num - sd_leaf_num, ymax = avg_leaf_num + sd_leaf_num, color = experiment)) +
@@ -36,7 +36,7 @@ ggplot(summary_2023)+
   xlab("")+ ylab("Avg Leaf Num")+ggtitle("Leaf Num Over Time for SB vs. Control")
 
 # Bud Number
-ggplot(summary_2023)+
+ggplot(summary_2023 %>% filter(!is.na(avg_buds_num)))+
   geom_point(aes(x = date, y = avg_buds_num, color = experiment))+
   geom_line(aes(x = date, y = avg_buds_num, color = experiment))+
   geom_errorbar(aes(date, ymin = avg_buds_num - sd_buds_num, ymax = avg_buds_num + sd_buds_num, color = experiment)) +
@@ -45,7 +45,7 @@ ggplot(summary_2023)+
 
 
 # Flower Number
-ggplot(summary_2023)+
+ggplot(summary_2023 %>% filter(!is.na(avg_flowers_num)))+
   geom_point(aes(x = date, y = avg_flowers_num, color = experiment))+
   geom_line(aes(x = date, y = avg_flowers_num, color = experiment))+
   geom_errorbar(aes(date, ymin = avg_flowers_num - sd_flowers_num, ymax = avg_flowers_num + sd_flowers_num, color = experiment)) +
@@ -54,7 +54,7 @@ ggplot(summary_2023)+
 
 
 # Fruit Number
-ggplot(summary_2023)+
+ggplot(summary_2023 %>% filter(!is.na(avg_fruit_num)))+
   geom_point(aes(x = date, y = avg_fruit_num, color = experiment))+
   geom_line(aes(x = date, y = avg_fruit_num, color = experiment))+
   geom_errorbar(aes(date, ymin = avg_fruit_num - sd_fruit_num, ymax = avg_fruit_num + sd_fruit_num, color = experiment)) +
@@ -162,3 +162,24 @@ ggplot(bargraph_pivot_data)+
   facet_wrap(.~name)+ 
   xlab("")+ylab("")+ ggtitle(("Total difference in measure features for SB vs. C"))
 
+# ============= # ============= # ============= # ============= # ============= 
+# ============= # ============= # ============= # ============= # ============= 
+# Days Until x
+# ============= # ============= # ============= # ============= # ============= 
+df <- summary_2023 %>% select(variety, experiment, date, avg_buds_num, 
+                              avg_flowers_num, avg_fruit_num) %>% 
+  mutate(avg_buds_num = as.numeric(avg_buds_num)) %>%  # change to feature_col here
+  filter(!is.na(avg_buds_num)) # change to feature_col here
+
+# Calculate the first week that had the first bud, flower, and fruit for
+# each variety in each experiemnt
+df  %<>% arrange(experiment, variety, date) %>%
+  group_by(experiment, variety) %>%
+  mutate(week_number = row_number()) %>% # label week 
+  group_by(experiment, variety) %>%
+  summarise(first_bud_week = ifelse(any(avg_buds_num != 0), 
+                                    min(week_number[avg_buds_num != 0]), 19),
+            first_flower_week = ifelse(any(avg_flowers_num != 0), 
+                                       min(week_number[avg_flowers_num != 0]), 19),
+            first_fruit_week = ifelse(any(avg_fruit_num != 0), 
+                                      min(week_number[avg_fruit_num != 0]), 19))
