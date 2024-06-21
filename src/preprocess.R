@@ -155,6 +155,14 @@ leaf_width_summary <- leaf_width %>% group_by(variety, experiment, date) %>%
   merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
   select(-label_23)
 
+
+##############
+# Combine 
+summary_2023 %<>% merge(basal_summary, by = c("variety", "experiment", "date",
+                                              "name", "gbs"), all = TRUE) %>% 
+  merge(leaf_width_summary, by = c("variety", "experiment", "date",
+                                   "name", "gbs"), all = TRUE)
+
 ######################################################################
 ### RUN CHECKS TO MAKE SURE DATA IS HOW WE EXPECT
 
