@@ -26,6 +26,7 @@
 
 - [About The Project](#about-the-project)
    * [File Structure](#file-structure)
+- [Acknowledgements/References](#acknowledgementsreferences)
 </details>
 
 
