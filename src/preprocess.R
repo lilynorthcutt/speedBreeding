@@ -137,6 +137,10 @@ summary_2023 %<>%
   merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
   select(-label_23)
 
+df_2023%<>% 
+  mutate(label_23 = variety) %>% #str_extract(variety, "(?<=\\C)\\d+$")) %>% 
+  merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
+  select(-label_23)
 
 # Basal Branches: Summmarize data and add names + gbs
 basal_summary <- basal_branches %>% group_by(variety, experiment, date) %>% 
@@ -162,6 +166,7 @@ summary_2023 %<>% merge(basal_summary, by = c("variety", "experiment", "date",
                                               "name", "gbs"), all = TRUE) %>% 
   merge(leaf_width_summary, by = c("variety", "experiment", "date",
                                    "name", "gbs"), all = TRUE)
+
 
 ######################################################################
 ### RUN CHECKS TO MAKE SURE DATA IS HOW WE EXPECT
