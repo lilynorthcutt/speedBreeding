@@ -103,6 +103,7 @@ ggplot(plot_data)+
 
 
 
+
 #######
 ### Leaf Number
 #######
@@ -223,6 +224,8 @@ print(confint(tukey_result))
 
 
 
+
+### Add Flowers
 
 #####
 ### RATE OF CHANGE
@@ -390,7 +393,7 @@ ggplot(plot_data)+
 
 
 #####
-### DAYS UNTIL
+### DAYS UNTIL FIRST
 ################################################################################
 # Filter to necessary columns
 df <- summary_2023 %>% select(variety, experiment, date, avg_buds_num, 

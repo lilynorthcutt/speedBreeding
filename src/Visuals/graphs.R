@@ -109,77 +109,93 @@ ggplot(basal_summary)+
   coord_flip()
 
 
-
-# ============= # ============= # ============= # ============= # ============= 
-# Total Buds
-ggplot(summary_2023)+
-  geom_line(aes(x = date, y = total_buds_num, color = experiment))+
-  facet_wrap(.~ name)+
-  xlab("")+ ylab("Total Buds")+ggtitle("Total Buds Over Time for SB vs. Control")
-
-# Total Flowers
-ggplot(summary_2023)+
-  geom_point(aes(x = date, y = total_flower_num, color = experiment))+
-  facet_wrap(.~ name)+
-  xlab("")+ ylab("Total Flowers")+ggtitle("Total Flowers Over Time for SB vs. Control")
-
-# Total Fruit
-ggplot(summary_2023)+
-  geom_point(aes(x = date, y = total_fruit_num, color = experiment))+
-  facet_wrap(.~ name)+
-  xlab("")+ ylab("Total Fruit")+ggtitle("Total Fruit Over Time for SB vs. Control")
-
-# ============= # ============= # ============= # ============= # ============= 
-# Bar graph
-features <- c("avg_height", "avg_leaf_num","total_buds_num","total_flower_num",
-              "total_fruit_num")
-total_by_date <- df_2023 %>% group_by(variety, experiment) %>% 
-  summarise(avg_height = mean(plant_height_cm, na.rm = T),
-            avg_leaf_num = mean(leaf_num, na.rm = T),
-            avg_buds_num = mean(buds_num, na.rm = T),
-            avg_flowers_num = mean(flowers_num, na.rm = T),
-            avg_fruit_num = mean(fruit_num, na.rm = T),
-            #mode_leaf_color = Mode(leaf_color),
-            total_buds_num =sum(buds_num, na.rm = T),
-            total_flower_num = sum(flowers_num, na.rm = T),
-            total_fruit_num = sum(fruit_num, na.rm = T),
-            
-            # avg_buds
-            # avg_flowers
-            # avg_fruit
-  ) %>% 
-  mutate('23_c' = str_extract(variety, "(?<=\\C)\\d+$")) %>% 
-  merge(variety_key %>% select(name, gbs, '23_c'), by = '23_c') %>%
-  select(-'23_c')
-
-bargraph_pivot_data <- total_by_date %>% 
-  pivot_longer(all_of(features), names_to = 'features',values_to = 'values') 
-
-
-ggplot(bargraph_pivot_data)+
-  geom_col(aes(x = features, y = values, color = experiment, fill = experiment), 
-           position = "dodge")+
-  facet_wrap(.~name)+ 
-  xlab("")+ylab("")+ ggtitle(("Total difference in measure features for SB vs. C"))
-
-# ============= # ============= # ============= # ============= # ============= 
 # ============= # ============= # ============= # ============= # ============= 
 # Days Until x
 # ============= # ============= # ============= # ============= # ============= 
-df <- summary_2023 %>% select(variety, experiment, date, avg_buds_num, 
-                              avg_flowers_num, avg_fruit_num) %>% 
-  mutate(avg_buds_num = as.numeric(avg_buds_num)) %>%  # change to feature_col here
-  filter(!is.na(avg_buds_num)) # change to feature_col here
+df <- df_2023 %>% select(variety, identifier, experiment, date, buds_num, 
+                              flowers_num, fruit_num) 
+df[is.na(df)] <- 0
 
 # Calculate the first week that had the first bud, flower, and fruit for
-# each variety in each experiemnt
+# each PLANT (group by variety, identifier, experiment )
+# (This is necessary so we can calculate mean AND sd)
 df  %<>% arrange(experiment, variety, date) %>%
-  group_by(experiment, variety) %>%
+  group_by(experiment, variety, identifier) %>%
   mutate(week_number = row_number()) %>% # label week 
-  group_by(experiment, variety) %>%
-  summarise(first_bud_week = ifelse(any(avg_buds_num != 0), 
-                                    min(week_number[avg_buds_num != 0]), 19),
-            first_flower_week = ifelse(any(avg_flowers_num != 0), 
-                                       min(week_number[avg_flowers_num != 0]), 19),
-            first_fruit_week = ifelse(any(avg_fruit_num != 0), 
-                                      min(week_number[avg_fruit_num != 0]), 19))
+  group_by(experiment, variety, identifier) %>%
+  summarise(first_bud_week = ifelse(any(buds_num != 0), 
+                                    min(week_number[buds_num != 0]), 19),
+            first_flower_week = ifelse(any(flowers_num != 0), 
+                                       min(week_number[flowers_num != 0]), 19),
+            first_fruit_week = ifelse(any(fruit_num != 0), 
+                                      min(week_number[fruit_num != 0]), 19)) %>% 
+  ungroup()
+
+# Now summarize down to the avg/sd first by variety and experiment
+df %<>%  group_by(variety, experiment) %>% 
+  summarise(
+    avg_first_bud = mean(first_bud_week, na.rm = T) ,
+    sd_first_bud = sd(first_bud_week, na.rm = T),
+    avg_first_flower = mean(first_flower_week, na.rm = T),
+    sd_first_flower = sd(first_flower_week, na.rm = T),
+    avg_first_fruit = mean(first_fruit_week, na.rm = T),
+    sd_first_fruit = sd(first_fruit_week, na.rm = T)
+  )
+
+# ADD IN VARIETY NAME
+variety_for_merge <- variety_key %>% select(name, gbs, label_23) %>% rename(variety = 'label_23')
+df %<>% merge(variety_for_merge, by = 'variety')
+
+# NOTE: DECIDING NOT TO ROUND BECAUSE FOR IF SOME PLANTS 
+
+# Changing it so that if plants never get buds they have a mean of 0 
+# (instead of 19 which we previously had for hyp testing because there are only 18 weeks in the study)
+df %<>% mutate(avg_first_bud = case_when(avg_first_bud == 19 ~0, T~avg_first_bud),
+               avg_first_flower = case_when(avg_first_flower == 19 ~0, T~avg_first_flower),
+               avg_first_fruit = case_when(avg_first_fruit == 19 ~0, T~avg_first_fruit)) %>% 
+  mutate(sd_first_bud = case_when(avg_first_bud == 0 ~0, T~sd_first_bud),
+         sd_first_flower = case_when(avg_first_flower == 0 ~0, T~sd_first_flower),
+         sd_first_fruit = case_when(avg_first_fruit == 0 ~0, T~sd_first_fruit),)
+
+# NOTE: DECIDING NOT TO ROUND BECAUSE AVG COULD BE >18.5 BUT NOT NEVER, THUS
+# THIS WILL CATCH THAT CASE
+# example - Chiltepin Control Buds
+
+# Buds
+ggplot(df %>% mutate(temp = 1))+
+  geom_bar(aes(x = temp, y = avg_first_bud, color = experiment, fill = experiment), stat="identity", position=position_dodge(), alpha = .65)+
+  geom_errorbar(aes(temp, ymin = avg_first_bud - sd_first_bud, ymax = avg_first_bud + sd_first_bud, color = experiment), width=.2,  position=position_dodge(.9)) +
+  facet_wrap(.~name)+
+  ylab("Avg # First Day Until Buds")+ggtitle("First Day Until Plants Get Buds")+
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+#sum <- summary_2023 %>% filter(name == 'Chiltepin', experiment == 'C', !is.na(avg_buds_num)) %>% select(name, date, avg_buds_num) 
+#d <- df %>% filter(variety == '23C343', experiment == 'C') #%>% select(variety, date, buds_num) 
+
+# Flower
+ggplot(df %>% mutate(temp = 1))+
+  geom_bar(aes(x = temp, y = avg_first_flower, color = experiment, fill = experiment), stat="identity", position=position_dodge(), alpha = .65)+
+  geom_errorbar(aes(temp, ymin = avg_first_flower - sd_first_flower, ymax = avg_first_flower + sd_first_flower, color = experiment), width=.2,  position=position_dodge(.9)) +
+  facet_wrap(.~name)+
+  ylab("Avg # First Day Until Buds")+ggtitle("First Day Until Plants Get Flowers")+
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+# Fruit
+ggplot(df %>% mutate(temp = 1))+
+  geom_bar(aes(x = temp, y = avg_first_fruit, color = experiment, fill = experiment), stat="identity", position=position_dodge(), alpha = .65)+
+  geom_errorbar(aes(temp, ymin = avg_first_fruit - sd_first_fruit, ymax = avg_first_fruit + sd_first_fruit, color = experiment), width=.2,  position=position_dodge(.9)) +
+  facet_wrap(.~name)+
+  ylab("Avg # First Day Until Buds")+ggtitle("First Day Until Plants Get Fruits")+
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
