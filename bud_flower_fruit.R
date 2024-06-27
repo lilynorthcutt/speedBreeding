@@ -46,7 +46,8 @@ ggplot(earlyj_budvfruit, aes(x = date, y = value, fill = measure))+
 orangeH_budvfruit <- summary_2023 %>% filter(!is.na(avg_flowers_num), name == 'Orange Habanero',
                                             avg_buds_num>0) %>% 
   select(name, date, avg_buds_num, avg_flowers_num, avg_fruit_num, experiment) %>% 
-  pivot_longer(c("avg_buds_num", "avg_flowers_num", "avg_fruit_num"), names_to = 'measure', values_to = 'value') %>% 
+  pivot_longer(c("avg_buds_num", "avg_flowers_num", "avg_fruit_num"), 
+               names_to = 'measure', values_to = 'value') %>% 
   mutate(measure = case_when(measure == 'avg_buds_num' ~"Average Bud #", 
                              measure == 'avg_flowers_num' ~"Average Flower #",
                              T ~"Average Fruit #"))
@@ -57,6 +58,11 @@ ggplot(orangeH_budvfruit, aes(x = date, y = value, fill = measure))+
   xlab("")+ ylab("Avg Flower Num")+ggtitle("Orange Habanero: Bud density vs. Flowering")+
   theme_bw()+
   scale_fill_brewer(palette="Paired")
+
+#--- Graphs illustrating "race" to first flowering ------------------------------
+ggplot(summary_2023)+
+  geom_point()
+
 
 
 

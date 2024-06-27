@@ -167,9 +167,49 @@ summary_2023 %<>% merge(basal_summary, by = c("variety", "experiment", "date",
   merge(leaf_width_summary, by = c("variety", "experiment", "date",
                                    "name", "gbs"), all = TRUE)
 
+##############
+# Create "days until first x" df
+plantingday_2023 <- as.Date("2023-10-18", "%Y-%m-%d")
+exp_end_2023 <- as.Date("2024-03-02", "%Y-%m-%d")
+
+# Prep df such that we have necessary cols to find 
+# 1- first date that (for each variety in each experiment) had the first bud
+# 2- first date that (for each variety in each experiment) had the first flower
+# 3- first date that (for each variety in each experiment) had the first fruit
+first_time <-summary_2023 %>% 
+  select(variety, experiment, date, avg_buds_num,avg_flowers_num, avg_fruit_num) %>% 
+  filter(!is.na(avg_buds_num), !is.na(avg_flowers_num), !is.na(avg_fruit_num)) %>% 
+  arrange(experiment, variety, date) %>%
+  group_by(experiment, variety) %>% 
+  summarise(
+    first_bud = ifelse(any(avg_buds_num != 0), 
+                       min(date[avg_buds_num != 0], na.rm = T) %>% as.Date(), exp_end_2023) %>% 
+      as.Date(),
+    first_flower = ifelse(any(avg_flowers_num != 0), 
+                       min(date[avg_flowers_num != 0], na.rm = T) %>% as.Date(), exp_end_2023) %>% 
+      as.Date(),
+    first_fruit = ifelse(any(avg_fruit_num != 0), 
+                       min(date[avg_fruit_num != 0], na.rm = T) %>% as.Date(), exp_end_2023) %>% 
+      as.Date()
+  ) %>% 
+  # Add number of days from planting
+  mutate(first_bud_num_days = first_bud - plantingday_2023,
+         first_flower_num_days = first_flower - plantingday_2023,
+         first_fruit_num_days = first_fruit - plantingday_2023,)
 
 ######################################################################
+### Adding # of days from planting (as an alternative to date)
+df_2023 %<>% mutate(j_date = date - plantingday_2023)
+summary_2023 %<>% mutate(j_date = date - plantingday_2023) 
+
+
+######################################################################
+######################################################################
+######################################################################
 ### RUN CHECKS TO MAKE SURE DATA IS HOW WE EXPECT
+######################################################################
+######################################################################
+######################################################################
 
 # Only the expected variety names
 varList <- c('23C340', '23C341', '23C342', '23C343')
