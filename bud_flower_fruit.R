@@ -60,9 +60,43 @@ ggplot(orangeH_budvfruit, aes(x = date, y = value, fill = measure))+
   scale_fill_brewer(palette="Paired")
 
 #--- Graphs illustrating "race" to first flowering ------------------------------
-ggplot(summary_2023)+
-  geom_point()
+# First bud
+ggplot(first_time)+
+  geom_point(aes(x = name, y = first_bud_num_days, color = experiment))+
+  coord_flip()+
+  ylab("Number of Days from Planting")+ xlab("")+ggtitle("Days Until First Bud")+
+  theme_bw()+
+  scale_fill_brewer(palette="Paired")+
+  ylim(0, 135)
 
+# First Flower
+ggplot(first_time)+
+  geom_point(aes(x = name, y = first_flower_num_days, color = experiment))+
+  coord_flip()+
+  ylab("Number of Days from Planting")+ xlab("")+ggtitle("Days Until First Flower")+
+  theme_bw()+
+  scale_fill_brewer(palette="Paired")+
+  ylim(0, 135)
+
+
+# First Fruit
+ggplot(first_time)+
+  geom_point(aes(x = name, y = first_fruit_num_days, color = experiment))+
+  coord_flip()+
+  ylab("Number of Days from Planting")+ xlab("")+ggtitle("Days Until First Fruit")+
+  theme_bw()+
+  scale_fill_brewer(palette="Paired")+
+  ylim(0, 135)
+
+#--- Graphs illustrating "race" to first flowering AND fruiting ----------------
+ggplot(first_time)+
+  geom_errorbar(aes(name, ymin = first_flower_num_days, ymax = first_fruit_num_days, color = experiment), 
+                width = .5, position=position_dodge(.9))+  
+  coord_flip()+
+  ylab("Number of Days from Planting")+ xlab("")+ggtitle("First Flowering and Fruiting Days")+
+  theme_bw()+
+  scale_fill_brewer(palette="Paired")+
+  ylim(0, 135)
 
 
 

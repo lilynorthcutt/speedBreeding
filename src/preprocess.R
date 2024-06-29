@@ -195,7 +195,10 @@ first_time <-summary_2023 %>%
   # Add number of days from planting
   mutate(first_bud_num_days = first_bud - plantingday_2023,
          first_flower_num_days = first_flower - plantingday_2023,
-         first_fruit_num_days = first_fruit - plantingday_2023,)
+         first_fruit_num_days = first_fruit - plantingday_2023,) %>% 
+  mutate(label_23 = variety) %>% #str_extract(variety, "(?<=\\C)\\d+$")) %>% 
+  merge(variety_key %>% select(name, gbs, label_23), by = 'label_23') %>%
+  select(-label_23)
 
 ######################################################################
 ### Adding # of days from planting (as an alternative to date)
