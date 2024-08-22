@@ -9,8 +9,11 @@ ggplot(summary_2023 %>% filter(!is.na(avg_height)))+
   geom_point(aes(x = date, y = avg_height, color = experiment))+
   geom_line(aes(x = date, y = avg_height, color = experiment))+
   geom_errorbar(aes(date, ymin = avg_height - sd_height, ymax = avg_height + sd_height, color = experiment)) +
-  facet_wrap(.~ name)+
-  xlab("")+ ylab("Avg Height")+ggtitle("Height Over Time for SB vs. Control")
+  facet_wrap(.~ name, ncol = 4)+
+  xlab("")+ ylab("Avg Height (in)")+ggtitle("Average Height Over Time")+
+  theme_bw()+
+  theme(legend.position="bottom",
+        text = element_text(size = 20))
 
 
 # Height Percent Increase (SCATTER)
@@ -28,12 +31,17 @@ ggplot(height_increase)+
 
 
 # Leaf Number
-ggplot(summary_2023 %>% filter(!is.na(avg_leaf_num)))+
+ggplot(summary_2023 %>% filter(!is.na(avg_leaf_num)) %>% mutate(experiment = case_when(experiment == 'C' ~'C', T ~"trt")))+
   geom_point(aes(x = date, y = avg_leaf_num, color = experiment))+
   geom_line(aes(x = date, y = avg_leaf_num, color = experiment))+
   geom_errorbar(aes(date, ymin = avg_leaf_num - sd_leaf_num, ymax = avg_leaf_num + sd_leaf_num, color = experiment)) +
-  facet_wrap(.~ name)+
-  xlab("")+ ylab("Avg Leaf Num")+ggtitle("Leaf Num Over Time for SB vs. Control")
+  facet_wrap(.~ name)+theme_bw()+
+  theme(#legend.position="bottom",
+        axis.text=element_text(size=12),
+        axis.title=element_text(size=14),
+        plot.title = element_text(size = 20)
+        )+
+  xlab("")+ ylab("Avg Leaf Num")+ggtitle("Leaf Count Over Time")
 
 # Bud Number
 ggplot(summary_2023 %>% filter(!is.na(avg_buds_num)))+
@@ -102,11 +110,11 @@ ggplot(basal_summary)+
   xlab("")+ ylab("Avg # Basal Branches")+ggtitle("Basal Branch Number for SB vs. Control")
 
 
-ggplot(basal_summary)+
+ggplot(basal_summary %>% mutate(experiment = case_when(experiment == 'C' ~'C', T ~"trt")))+
   geom_bar(aes(x = name, y = avg_basal, color = experiment, fill = experiment), stat="identity", position=position_dodge(), alpha = .65)+
   geom_errorbar(aes(name, ymin = avg_basal - sd_basal, ymax = avg_basal + sd_basal, color = experiment), width=.2,  position=position_dodge(.9)) +
-  xlab("")+ ylab("Avg # Basal Branches")+ggtitle("Basal Branch Number for SB vs. Control")+
-  coord_flip()
+  xlab("")+ ylab("Avg Number of Basal Branches")+ggtitle("Count of Basal Branch")+
+  coord_flip() + theme_bw() + theme(text = element_text(size = 20))
 
 
 # ============= # ============= # ============= # ============= # ============= 
@@ -199,3 +207,4 @@ ggplot(df %>% mutate(temp = 1))+
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank()
   )
+
